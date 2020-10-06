@@ -1,0 +1,38 @@
+!title: meta {Example Page}
+!author: meta {Bob Bobson}
+!date: meta {1901 Jan 1}
+
+!Section 1: {
+    Normal text.
+    No whitespace is preserved.
+
+    "Unless  you  use  quotation  marks"
+    ""You can use double quotes for the same effect, but preserving quotes""
+    ""It also allows the usage of "quotes" like normal""
+
+    If you like having seperate paragraphs, use paragraph sections
+    !: paragraph {
+        A new paragraph. Unnamed, untagged, sections are paragraphs by default
+    }
+
+    `monospace`
+    _underlined_
+    #bold#
+    *italic*
+    !"https://example.com": link { A Link }
+    !"/image.png": image { Alt Text }
+    !an equation; maths { sqrt(x^2 + y^2) }
+    !some code; rust {"
+        fn x() {}
+    "}
+    !; {comment}
+    !; {<function>()}
+    !; {<variable>}
+    !; {^[reference]}
+
+    Published <date>
+
+    !Subsection: {
+        This is a nested heading
+    }
+}

@@ -1,9 +1,12 @@
 [package]
 name = "ley"
-version = "0.1.0"
+version = "0.0.1"
 authors = ["AidoP <aidop@me.com>"]
 edition = "2018"
+description = "Parser and html renderer of Ley files"
+repository = "https://github.com/AidoP/ley"
+readme = "readme.md"
+license = "MIT"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
+categories = ["parser-implementations"]
+keywords = []

@@ -46,7 +46,7 @@ impl<'a> Display for InnerHtml<'a> {
                     depth = self.1
                 )?,
                 Section { contents, kind: SectionKind::Paragraph, ..} | Section { name: None, contents, kind: SectionKind::Section } => write!(f, "<p>{}</p>", InnerHtml(&contents, self.1))?,
-                Text { contents } => write!(f, "{}", contents)?,
+                Text { contents } => write!(f, "{} ", contents)?,
                 Section { name: Some(name), contents, kind: SectionKind::Link } => write!(f, "<a href=\"{name}\">{contents}</a>", name = name, contents = InnerHtml(&contents, self.1))?,
                 Section { contents, kind: SectionKind::Code, ..} => write!(f, "<code>{contents}</code>", contents = InnerHtml(&contents, self.1))?,
                 Section { name: None, contents, kind: SectionKind::Link } => write!(f, "<a>{contents}</a>", contents = InnerHtml(&contents, self.1))?,

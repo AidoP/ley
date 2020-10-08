@@ -11,12 +11,12 @@ pub struct Page {
 
 pub trait Format<'a>: Display + From<Ley<'a>> + std::ops::Deref<Target=Ley<'a>> {
     const EXTENSION: &'static str;
-    fn index(target: PathBuf, pages: &'a [Page]) -> Option<&'static str> {
+    fn index(target: PathBuf, pages: &'a [Page], style: Metadata) -> Option<&'static str> {
         let mut ley = Ley {
             title: Some("Index".to_string()).into(),
             author: None.into(),
             date: None.into(),
-            style: None.into(),
+            style,
             lines: LeyLines(vec![
                 LeyLine::Section {
                     name: Some(String::new("Index")),

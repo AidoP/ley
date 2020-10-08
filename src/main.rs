@@ -106,7 +106,7 @@ fn main_catch() -> Option<&'static str> {
             }
         }
         if index {
-            catch!(none Html::index(ley_destination.to_path_buf(), &pages))
+            catch!(none Html::index(ley_destination.to_path_buf(), &pages, style.into()))
         }
         None
     } else if ley_source.is_file() {

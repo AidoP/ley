@@ -86,7 +86,7 @@ pub enum LeyLine<'a> {
         kind: SectionKind,
         contents: LeyLines<'a>
     },
-    Paragraph {
+    Text {
         contents: String<'a>
     },
     Comment
@@ -134,7 +134,7 @@ impl<'a> LeyLine<'a> {
                 )
             }
             Identifier(ident) => {
-                Ok(Self::Paragraph {
+                Ok(Self::Text {
                     contents: String::with(ident, token_stream)
                 })
             }
@@ -150,7 +150,8 @@ pub enum SectionKind {
     Metadata,
 
     Link,
-    Image
+    Image,
+    Code
 }
 impl SectionKind {
     pub fn new(from: &str) -> Result<Self, ParseError> {
@@ -160,6 +161,7 @@ impl SectionKind {
             "meta" | "metadata" => Ok(Self::Metadata),
             "link" => Ok(Self::Link),
             "image" | "img" => Ok(Self::Image),
+            "code" | "lang" => Ok(Self::Code),
             kind => Err(ParseError::UnknownSection(kind))
         }
     }
@@ -193,7 +195,7 @@ impl<'a> String<'a> {
     }
     pub fn from_lines(mut ley_lines: LeyLines<'a>) -> Result<Self, ParseError> {
         if ley_lines.len() == 1 {
-            if let LeyLine::Paragraph { contents } = ley_lines.remove(0) {
+            if let LeyLine::Text { contents } = ley_lines.remove(0) {
                 Ok(contents)
             } else {
                 Err(ParseError::ExpectedString)

@@ -23,13 +23,10 @@ impl<'a> Display for InnerHtml<'a> {
                     contents = InnerHtml(&contents, self.1 + 1),
                     depth = self.1
                 )?,
-                Section { name: None, contents, kind: SectionKind::Section } | Section { contents, kind: SectionKind::Paragraph, ..} => write!(
-                    f,
-                    "{contents}",
-                    contents = InnerHtml(&contents, self.1 + 1),
-                )?,
-                Paragraph { contents } => write!(f, "<p>{}</p>", contents)?,
+                Section { contents, kind: SectionKind::Paragraph, ..} | Section { name: None, contents, kind: SectionKind::Section } => write!(f, "<p>{}</p>", InnerHtml(&contents, self.1))?,
+                Text { contents } => write!(f, "{}", contents)?,
                 Section { name: Some(name), contents, kind: SectionKind::Link } => write!(f, "<a href=\"{name}\">{contents}</a>", name = name, contents = InnerHtml(&contents, self.1))?,
+                Section { contents, kind: SectionKind::Code, ..} => write!(f, "<code>{contents}</code>", contents = InnerHtml(&contents, self.1))?,
                 Section { name: None, contents, kind: SectionKind::Link } => write!(f, "<a>{contents}</a>", contents = InnerHtml(&contents, self.1))?,
                 Section { name: Some(name), kind: SectionKind::Image, ..} => write!(f, "<img src=\"{name}\">", name = name)?,
                 Comment | Section { kind: SectionKind::Metadata, ..} | Section { kind: SectionKind::Image, ..} => ()

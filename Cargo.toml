@@ -1,6 +1,6 @@
 [package]
 name = "ley"
-version = "0.0.3"
+version = "0.0.4"
 authors = ["AidoP <aidop@me.com>"]
 edition = "2018"
 description = "Parser and html renderer of Ley files"

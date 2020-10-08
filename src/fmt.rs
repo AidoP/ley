@@ -1,37 +1,75 @@
-use crate::{Ley, LeyLine, LeyLines, ley};
+use std::{fmt::Display, fs::File, io::{self, Write}, path::PathBuf};
+use std::collections::VecDeque;
 
-use std::fmt::{self, Display, Formatter};
+use crate::ley::*;
+use super::catch;
 
-pub struct Html<'a>(pub Ley<'a>);
-impl<'a> Display for Html<'a> {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        write!(f, include_str!("main.html"), title = self.0.title.as_ref().unwrap_or(&"Untitled Page".into()), content = InnerHtml(&self.0.lines, 1), author = self.0.author.as_ref().unwrap_or(&"No Author".into()), date = self.0.date.as_ref().unwrap_or(&"Unknown Date".into()), style = self.0.style.as_ref().unwrap_or(&"main.css".into()))
-    }
+pub struct Page {
+    pub location: std::string::String,
+    pub title: std::string::String
 }
 
-struct InnerHtml<'a>(pub &'a LeyLines<'a>, usize);
-impl<'a> Display for InnerHtml<'a> {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        use LeyLine::*;
-        for ley_line in self.0.iter() {
-            use ley::SectionKind;
-            match ley_line {
-                Section { name: Some(name), contents, kind: SectionKind::Section} => write!(
-                    f,
-                    "<h{depth} id=\"{name}\">{name}</h{depth}><div class=\"depth_{depth}\">{contents}</div>",
-                    name = name,
-                    contents = InnerHtml(&contents, self.1 + 1),
-                    depth = self.1
-                )?,
-                Section { contents, kind: SectionKind::Paragraph, ..} | Section { name: None, contents, kind: SectionKind::Section } => write!(f, "<p>{}</p>", InnerHtml(&contents, self.1))?,
-                Text { contents } => write!(f, "{}", contents)?,
-                Section { name: Some(name), contents, kind: SectionKind::Link } => write!(f, "<a href=\"{name}\">{contents}</a>", name = name, contents = InnerHtml(&contents, self.1))?,
-                Section { contents, kind: SectionKind::Code, ..} => write!(f, "<code>{contents}</code>", contents = InnerHtml(&contents, self.1))?,
-                Section { name: None, contents, kind: SectionKind::Link } => write!(f, "<a>{contents}</a>", contents = InnerHtml(&contents, self.1))?,
-                Section { name: Some(name), kind: SectionKind::Image, ..} => write!(f, "<img src=\"{name}\">", name = name)?,
-                Comment | Section { kind: SectionKind::Metadata, ..} | Section { kind: SectionKind::Image, ..} => ()
-            }
+pub trait Format<'a>: Display + From<Ley<'a>> + std::ops::Deref<Target=Ley<'a>> {
+    const EXTENSION: &'static str;
+    fn index(target: PathBuf, pages: &'a [Page]) -> Option<&'static str> {
+        let mut ley = Ley {
+            title: Some("Index".to_string()).into(),
+            author: None.into(),
+            date: None.into(),
+            style: None.into(),
+            lines: LeyLines(vec![
+                LeyLine::Section {
+                    name: Some(String::new("Index")),
+                    kind: SectionKind::Section,
+                    contents: LeyLines(vec![])
+                }
+            ])
+        };
+        for page in pages {
+            ley.lines.push(
+                LeyLine::Section {
+                    name: None,
+                    kind: SectionKind::Paragraph,
+                    contents: LeyLines(vec![
+                        LeyLine::Section {
+                            name: Some(String::new(page.location.as_str())),
+                            kind: SectionKind::Link,
+                            contents: LeyLines(vec![
+                                LeyLine::Text {
+                                    contents: String::new(page.title.as_str())
+                                }
+                            ])
+                        }
+                    ])
+                }
+            );
         }
-        Ok(())
+        if let Err(error) = Self::from(ley).render("index", target) {
+            Some(error)
+        } else {
+            None
+        }
+    }
+    fn render(&self, name: &str, target: PathBuf) -> Result<Page, &'static str> {
+        let mut file_name = name.to_string();
+        file_name.push('.');
+        file_name.push_str(Self::EXTENSION);
+        let mut ley_destination = target.to_path_buf();
+        ley_destination.push(file_name.clone());
+        let mut ley_destination = if let Ok(file) = File::create(ley_destination.clone()) {
+            file
+        } else {
+            eprintln!("Unable to create `{:?}`", ley_destination);
+            return Err("File could not be opened with write permissions")
+        };
+
+        if write!(ley_destination, "{}", self).is_err() {
+            Err("Unable to write to destination file")
+        } else {
+            Ok(Page {
+                location: file_name,
+                title: self.title.default("Untitled").to_string()
+            })
+        }
     }
 }

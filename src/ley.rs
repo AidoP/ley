@@ -62,6 +62,13 @@ impl Metadata {
             Err(ParseError::ExpectedString)
         }
     }
+    pub fn default<'a>(&'a self, default: &'a str) -> &'a str {
+        if let Self(Some(string)) = self {
+            string.as_str()
+        } else {
+            default
+        }
+    }
 }
 impl Deref for Metadata {
     type Target = Option<std::string::String>;
@@ -81,7 +88,7 @@ impl From<Option<std::string::String>> for Metadata {
 }
 
 #[derive(Debug)]
-pub struct LeyLines<'a>(Vec<LeyLine<'a>>);
+pub struct LeyLines<'a>(pub Vec<LeyLine<'a>>);
 impl <'a> LeyLines<'a> {
     pub fn new(mut source: &'a str) -> Result<Self, ParseError> {
         let mut token_stream = Vec::new();

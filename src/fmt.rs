@@ -5,7 +5,7 @@ use std::fmt::{self, Display, Formatter};
 pub struct Html<'a>(pub Ley<'a>);
 impl<'a> Display for Html<'a> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        write!(f, include_str!("main.html"), title = self.0.title.as_ref().unwrap_or(&ley::String::new("Untitled Page")), content = InnerHtml(&self.0.lines, 1), author = self.0.author.as_ref().unwrap_or(&ley::String::new("No Author")), date = self.0.date.as_ref().unwrap_or(&ley::String::new("Unknown Date")))
+        write!(f, include_str!("main.html"), title = self.0.title.as_ref().unwrap_or(&"Untitled Page".into()), content = InnerHtml(&self.0.lines, 1), author = self.0.author.as_ref().unwrap_or(&"No Author".into()), date = self.0.date.as_ref().unwrap_or(&"Unknown Date".into()), style = self.0.style.as_ref().unwrap_or(&"main.css".into()))
     }
 }
 

@@ -38,10 +38,35 @@ macro_rules! catch {
 }
 
 fn main_catch() -> Option<&'static str> {
-    let mut args = env::args();
-    let ley_source = catch!(some "A path to the file or directory to parse is required" => args.nth(1));
+
+    let mut style = None;
+    let mut ley_source = None;
+    let mut ley_destination = None;
+
+    {
+        let mut args = env::args().skip(1);
+        while let Some(arg) = args.next() {
+            match arg.as_str() {
+                "--style" => style = Some(catch!(some "style option requires an argument" => args.next())),
+                arg if arg.starts_with("--") => {
+                    eprintln!("Unexpected {}", arg);
+                    return Some("Unknown option")
+                },
+                arg => {
+                    if ley_source.is_none() {
+                        ley_source = Some(arg.to_string())
+                    } else if ley_destination.is_none() {
+                        ley_destination = Some(arg.to_string())
+                    } else {
+                        return Some("Too many positional arguments")
+                    }
+                }
+            }
+        }
+    }
+    let ley_source = catch!(some "A path to the file or directory to parse is required" => ley_source);
     let ley_source = Path::new(&ley_source);
-    let ley_destination = args.next().unwrap_or(".".into());
+    let ley_destination = ley_destination.unwrap_or(".".into());
     let ley_destination = Path::new(&ley_destination);
 
     if ley_source.is_dir() {
@@ -62,7 +87,7 @@ fn main_catch() -> Option<&'static str> {
 
                     let mut ley_contents = String::new();
                     catch!("Unable to read from ley file" => ley_source.read_to_string(&mut ley_contents));
-                    match Ley::new(&ley_contents) {
+                    match Ley::new(&ley_contents, style.clone().into()) {
                         Ok(ley) => {
                             catch!("Unable to write to destination file" => write!(ley_destination, "{}", fmt::Html(ley)))
                         }
@@ -80,7 +105,7 @@ fn main_catch() -> Option<&'static str> {
         let mut ley_destination = catch!("Unable to create destination file" => File::create(ley_destination));
         let mut ley_contents = String::new();
         catch!("Unable to read from specified file" => ley_source.read_to_string(&mut ley_contents));
-        match Ley::new(&ley_contents) {
+        match Ley::new(&ley_contents, style.into()) {
             Ok(ley) => {
                 catch!("Unable to write to destination file" => write!(ley_destination, "{}", fmt::Html(ley)));
                 None

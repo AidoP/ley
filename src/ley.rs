@@ -3,12 +3,13 @@ use std::{cmp::PartialEq, fmt::{self, Debug, Display, Formatter}, ops::{Deref,De
 /// A parsed ley file
 pub struct Ley<'a> {
     pub lines: LeyLines<'a>,
-    pub title: Metadata<'a>,
-    pub author: Metadata<'a>,
-    pub date: Metadata<'a>
+    pub title: Metadata,
+    pub author: Metadata,
+    pub date: Metadata,
+    pub style: Metadata
 }
 impl<'a> Ley<'a> {
-    pub fn new(mut source: &'a str) -> Result<Self, ParseError> {
+    pub fn new(mut source: &'a str, style: Metadata) -> Result<Self, ParseError<'a>> {
         let mut token_stream = Vec::new();
         while let Some(token) = Token::parse(&mut source) {
             token_stream.push(token)
@@ -17,16 +18,17 @@ impl<'a> Ley<'a> {
         let mut token_stream = TokenIter(&mut token_stream);
 
         let mut lines = Vec::new();
-        let (mut title, mut author, mut date) = (None, None, None);
+        let (mut title, mut author, mut date, mut style) = (Metadata::NONE, Metadata::NONE, Metadata::NONE, style);
         while let Some(_) = token_stream.peek() {
             use LeyLine::*;
             match LeyLine::parse(&mut token_stream)? {
                 Section { name: Some(name), contents, kind: SectionKind::Metadata } => {
                     if let Some(&name) = name.get(0) {
                         match name {
-                            "title" => title = Some(String::from_lines(contents)?),
-                            "author" => author = Some(String::from_lines(contents)?),
-                            "date" => date = Some(String::from_lines(contents)?),
+                            "title" => title = Metadata::from_lines(contents)?,
+                            "author" => author = Metadata::from_lines(contents)?,
+                            "date" => date = Metadata::from_lines(contents)?,
+                            "style" => style = Metadata::from_lines(contents)?,
                             _ => eprintln!("Warning: Unknown Metadata {}", name)
                         }
                     }
@@ -40,12 +42,43 @@ impl<'a> Ley<'a> {
             lines,
             title,
             author,
-            date
+            date,
+            style
         })
     }
 }
 
-type Metadata<'a> = Option<String<'a>>;
+pub struct Metadata(Option<std::string::String>);
+impl Metadata {
+    const NONE: Self = Self(None);
+    pub fn from_lines<'a>(mut ley_lines: LeyLines<'a>) -> Result<Self, ParseError> {
+        if ley_lines.len() == 1 {
+            if let LeyLine::Text { contents } = ley_lines.remove(0) {
+                Ok(Self(Some(format!("{}", contents))))
+            } else {
+                Err(ParseError::ExpectedString)
+            }
+        } else {
+            Err(ParseError::ExpectedString)
+        }
+    }
+}
+impl Deref for Metadata {
+    type Target = Option<std::string::String>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+impl DerefMut for Metadata {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+impl From<Option<std::string::String>> for Metadata {
+    fn from(from: Option<std::string::String>) -> Self {
+        Self(from)
+    }
+}
 
 #[derive(Debug)]
 pub struct LeyLines<'a>(Vec<LeyLine<'a>>);
